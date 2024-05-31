@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from "uuid";
+
 export function toNum(value: any) {
   return isNaN(Number(value)) ? 0 : Number(value);
 }
@@ -12,6 +14,7 @@ export function generateRandomString(length: number): string {
 }
 
 export function generateRandomObject(): {
+  id: string;
   attr1: string;
   attr2: string;
   attr3: string;
@@ -45,6 +48,7 @@ export function generateRandomObject(): {
   }
 
   return {
+    id: uuidv4(),
     attr1: String(generateRandomNumber(1, 100, Math.random() <= 0.5)),
     attr2: generateRandomString(attr2Length),
     attr3: generateRandomString(attr3Length),
@@ -56,67 +60,6 @@ export function generateRandomObject(): {
     attr9: generateRandomString(attr9Length),
     detail: detailArray,
   };
-}
-
-export function findFirstGreaterOrEqual(arr: number[], target: number): number {
-  let left: number = 0;
-  let right: number = arr.length - 1;
-  let resultIndex: number = arr.length;
-
-  while (left <= right) {
-    const mid: number = Math.floor((left + right) / 2);
-
-    if (arr[mid] >= target) {
-      resultIndex = mid;
-      right = mid - 1;
-    } else {
-      left = mid + 1;
-    }
-  }
-
-  return resultIndex;
-}
-
-export function cumulativeArray(inputArray: number[]): number[] {
-  const outputArray: number[] = [];
-  let sum: number = 0;
-
-  for (const num of inputArray) {
-    sum += num;
-    outputArray.push(sum);
-  }
-
-  return outputArray;
-}
-
-export function vtSum(list: any[], config: any[]) {
-  const result: any = {};
-  config.forEach((vtc) => {
-    if (!vtc.sum) {
-      result[vtc.prop || vtc.type] = "--";
-    } else if (vtc.sum === "quantity" || vtc.sum === "weight" || vtc.sum === "money") {
-      let sum = 0;
-      if (vtc.detail) {
-        list.forEach((item) => {
-          item[vtc.detail].forEach((childItem: any) => {
-            sum += toNum(childItem[vtc.prop]);
-          });
-        });
-      } else {
-        list.forEach((item) => {
-          sum += toNum(item[vtc.prop]);
-        });
-      }
-      result[vtc.prop || vtc.type] = sum;
-    } else {
-      result[vtc.prop || vtc.type] = vtc.sum;
-    }
-  });
-  return result;
-}
-
-export function formatNum(value: number, formatType: "quantity" | "weight" | "money") {
-  return `${value} | ${formatType}`;
 }
 
 export function generateRandomNumber(min: number, max: number, isInteger: boolean = false, decimalPlaces: number = 7): number {
@@ -134,20 +77,46 @@ export function generateRandomNumber(min: number, max: number, isInteger: boolea
   }
 }
 
-export function vtc(vtConfig: any[], prop: string) {
-  if (prop === "index" || prop === "operations") {
-    return vtConfig.find((item) => item.type === prop);
-  } else {
-    return vtConfig.find((item) => item.prop === prop);
-  }
+export function vtConfigItem(vtConfig: any[], prop: string) {
+  return vtConfig.find((item) => item.prop === prop);
 }
 
-export function vtcc(vtConfig: any[], prop: string) {
-  const obj = vtc(vtConfig, prop);
-  return `col ${obj.fixed ? "fixed" : ""} ${obj.align || ""} ${obj.outline || ""} vtc-${prop}`;
+export function vtColClass(vtConfig: any[], prop: string) {
+  const item = vtConfigItem(vtConfig, prop);
+  return `vt-col ${item.fixed ? "fixed" : ""} ${item.align || ""} ${item.outline || ""} vt-col-${prop}`;
 }
 
-export function vtcs(vtConfig: any[], prop: string) {
-  const obj = vtc(vtConfig, prop);
-  return { ...{ width: obj.width, order: toNum(obj.order) }, ...obj.fixed };
+export function vtColStyle(vtConfig: any[], prop: string) {
+  const item = vtConfigItem(vtConfig, prop);
+  return { ...{ width: item.width, order: toNum(item.order) }, ...item.fixed };
+}
+
+export function vtFooterData(tableData: any[], vtConfig: any[]) {
+  const result: any = {};
+
+  const needToSum = ["quantity", "weight", "money"];
+
+  vtConfig.forEach((item) => {
+    if (!item.sum) {
+      result[item.prop] = "--";
+    } else if (needToSum.includes(item.sum)) {
+      let sum = 0;
+      if (item.detail) {
+        tableData.forEach((row) => {
+          row[item.detail].forEach((detailRow: any) => {
+            sum += toNum(detailRow[item.prop]);
+          });
+        });
+      } else {
+        tableData.forEach((row) => {
+          sum += toNum(row[item.prop]);
+        });
+      }
+      result[item.prop] = sum;
+    } else {
+      result[item.prop] = item.sum;
+    }
+  });
+
+  return result;
 }

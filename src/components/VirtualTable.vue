@@ -8,49 +8,50 @@
     <div class="virtual-table" :style="{ paddingTop: `${paddingTop}px`, paddingBottom: `${paddingBottom}px` }">
       <div class="virtual-table-item virtual-table-header">
         <slot name="header">
-          <div class="row">
+          <div class="virtual-table-row">
             <div
-              v-for="(item, index) in vtConfig"
-              :key="index"
-              :class="vtcc(vtConfig, item.prop || item.type)"
-              :style="vtcs(vtConfig, item.prop || item.type)"
-              :draggable="!item.fixed"
-              @dragstart="handleDragStart"
-              @drop="handleDrop"
-              @dragenter.prevent
-              @dragover.prevent
+              v-for="item in vtConfig"
+              :key="item.prop"
+              :class="vtColClass(vtConfig, item.prop)"
+              :style="vtColStyle(vtConfig, item.prop)"
+              :draggable="!item.fixed && drag"
+              @dragstart="dragStartFunc"
+              @drop="dropFunc"
+              @dragenter="dragEnterFunc"
+              @dragover="dragOverFunc"
             >
-              <div class="cell">
-                <span v-if="item.type === 'index'" title="序号">序号</span>
-                <span v-else-if="item.type === 'operations'" title="操作">操作</span>
-                <span v-else :title="item.label">{{ item.label }}</span>
+              <div class="vt-cell">
+                <span :title="item.label">{{ item.label }}</span>
               </div>
             </div>
           </div>
         </slot>
       </div>
-      <template v-for="(item, index) in list" :key="index">
+
+      <template v-for="(item, index) in tableData" :key="item[rowKey]">
         <div
           class="virtual-table-item"
-          v-if="index >= startIndex && index <= endIndex"
+          :class="{ highlight: highlightedRows.includes(index) }"
           @click="highlightFunc(index)"
-          :class="{ highlight: highlights.includes(index) }"
+          v-if="index >= startIndex && index <= endIndex"
         >
-          <slot :item="item" :index="index"></slot>
+          <div class="virtual-table-row">
+            <slot :item="item" :index="index"></slot>
+          </div>
         </div>
       </template>
-      <div class="virtual-table-item virtual-table-footer">
+
+      <div class="virtual-table-item virtual-table-footer" v-if="footer">
         <slot name="footer">
-          <div class="row">
+          <div class="virtual-table-row">
             <div
-              class="col"
-              v-for="(item, index) in vtConfig"
-              :key="index"
-              :class="vtcc(vtConfig, item.prop || item.type)"
-              :style="vtcs(vtConfig, item.prop || item.type)"
+              v-for="item in vtConfig"
+              :key="item.prop"
+              :class="vtColClass(vtConfig, item.prop)"
+              :style="vtColStyle(vtConfig, item.prop)"
             >
-              <div class="cell">
-                <span :title="sumResult[item.prop || item.type]" v-if="sumResult">{{ sumResult[item.prop || item.type] }}</span>
+              <div class="vt-cell">
+                <span :title="footerData[item.prop]" v-if="footerData">{{ footerData[item.prop] }}</span>
               </div>
             </div>
           </div>
@@ -61,12 +62,16 @@
 </template>
 
 <script setup lang="ts">
-  import { vtSum, vtcc, vtcs } from "@/utils";
-  import { onMounted, ref, watch } from "vue";
+  import { ref, watch, onMounted } from "vue";
+  import { vtColClass, vtColStyle, vtFooterData } from "@/utils";
   import type { Ref, PropType } from "vue";
 
   const props = defineProps({
-    list: {
+    tableData: {
+      type: Array as PropType<any[]>,
+      required: true,
+    },
+    vtConfig: {
       type: Array as PropType<any[]>,
       required: true,
     },
@@ -82,14 +87,24 @@
       type: Number,
       required: true,
     },
+    rowKey: {
+      type: String,
+      required: true,
+    },
     detailKey: {
       type: String,
       required: false,
       default: "",
     },
-    vtConfig: {
-      type: Array as PropType<any[]>,
-      required: true,
+    footer: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    drag: {
+      type: Boolean,
+      required: false,
+      default: false,
     },
   });
 
@@ -97,14 +112,12 @@
 
   onMounted(() => {
     watch(
-      () => props.list,
+      () => props.tableData,
       () => {
         init();
       },
     );
   });
-
-  const sumResult = ref();
 
   const virtualTableContainer = ref();
 
@@ -115,36 +128,40 @@
   const paddingBottom = ref(0);
 
   const rowHeights: Ref<number[]> = ref([]);
-  const rowHeights2: Ref<number[]> = ref([]);
+  const AuxiliaryRowHeights: Ref<number[]> = ref([]);
 
-  const listLength = ref(0);
+  const tableDataLength = ref(0);
 
   const lastScrollTop = ref(0);
 
-  const highlights: Ref<number[]> = ref([]);
+  const footerData = ref();
+
+  const highlightedRows: Ref<number[]> = ref([]);
 
   function init() {
-    listLength.value = props.list.length;
+    tableDataLength.value = props.tableData.length;
 
-    props.list.forEach((item, index) => {
+    props.tableData.forEach((item, index) => {
       const detailLength = props.detailKey ? item[props.detailKey].length : 1;
       rowHeights.value[index] = props.rowHeight * detailLength;
     });
 
     let sum = 0;
-    for (let i = 0; i < listLength.value; i++) {
-      sum += rowHeights.value[i];
-      rowHeights2.value[i] = sum;
+    rowHeights.value.forEach((item, index) => {
+      sum += item;
+      AuxiliaryRowHeights.value[index] = sum;
+    });
+
+    if (props.footer) {
+      footerData.value = vtFooterData(props.tableData, props.vtConfig);
     }
 
-    sumResult.value = vtSum(props.list, props.vtConfig);
-
-    highlights.value = [];
+    highlightedRows.value = [];
 
     main(true);
   }
 
-  function main(force: boolean = false) {
+  function main(force = false) {
     const scrollTop = virtualTableContainer.value.scrollTop;
     if (!force && scrollTop === lastScrollTop.value) {
       return;
@@ -152,10 +169,10 @@
     lastScrollTop.value = scrollTop;
 
     let left = 0;
-    let right = listLength.value - 1;
+    let right = tableDataLength.value - 1;
     while (left <= right) {
       let mid = Math.floor((left + right) / 2);
-      if (rowHeights2.value[mid] < scrollTop) {
+      if (AuxiliaryRowHeights.value[mid] < scrollTop) {
         left = mid + 1;
       } else {
         right = mid - 1;
@@ -163,44 +180,74 @@
     }
     startIndex.value = left;
 
-    paddingTop.value = rowHeights2.value[startIndex.value - 1] || 0;
+    paddingTop.value = AuxiliaryRowHeights.value[startIndex.value - 1] || 0;
 
     let end = startIndex.value + 1;
     let height = props.maxHeight;
-    for (let i = end; i < listLength.value; i++) {
+    for (let i = startIndex.value + 1; i < tableDataLength.value; i++) {
       height -= rowHeights.value[i];
-      if (height <= 0 || i === listLength.value - 1) {
+      if (height <= 0 || i === tableDataLength.value - 1) {
         end = i;
         break;
       }
     }
     endIndex.value = end;
 
-    paddingBottom.value = rowHeights2.value[listLength.value - 1] - rowHeights2.value[endIndex.value];
+    paddingBottom.value = AuxiliaryRowHeights.value[tableDataLength.value - 1] - AuxiliaryRowHeights.value[endIndex.value];
   }
 
   function highlightFunc(index: number) {
-    const i = highlights.value.indexOf(index);
-    if (i === -1) {
-      highlights.value.push(index);
+    const highlightedRowIndex = highlightedRows.value.indexOf(index);
+    if (highlightedRowIndex === -1) {
+      highlightedRows.value.push(index);
     } else {
-      highlights.value.splice(i, 1);
+      highlightedRows.value.splice(highlightedRowIndex, 1);
     }
   }
 
-  const source = ref("");
-  const target = ref("");
-  function handleDragStart(e: any) {
-    source.value = e.target.className.split("vtc-")[1].split(" ")[0];
-  }
-  function handleDrop(e: any) {
-    const targetClass = e.target.nodeName === "SPAN" ? e.target.parentNode.parentNode.className : e.target.parentNode.className;
-    target.value = targetClass.split("vtc-")[1].split(" ")[0];
-    if (source.value === target.value) {
+  const sourceProp = ref("");
+  const targetProp = ref("");
+
+  function dragStartFunc(ev: DragEvent) {
+    if (!props.drag) {
       return;
     }
+    if (!ev || !ev.target) {
+      return;
+    }
+    sourceProp.value = (ev.target as HTMLElement).className?.split("vt-col-")[1]?.split(" ")[0];
+  }
 
-    emit("reorder", source.value, target.value);
+  function dropFunc(ev: DragEvent) {
+    if (!props.drag) {
+      return;
+    }
+    if (!ev || !ev.target) {
+      return;
+    }
+    const eTarget = ev.target as HTMLElement;
+    if (!eTarget.parentNode || !eTarget.parentNode.parentNode) {
+      return;
+    }
+    const eTargetParentNode = eTarget.parentNode as HTMLElement;
+    const eTargetParentNodeParentNode = eTargetParentNode.parentNode as HTMLElement;
+
+    const targetClass = eTarget.nodeName === "SPAN" ? eTargetParentNodeParentNode.className : eTargetParentNode.className;
+
+    targetProp.value = targetClass?.split("vt-col-")[1]?.split(" ")[0];
+
+    emit("reorder", sourceProp.value, targetProp.value);
+  }
+
+  function dragEnterFunc(ev: DragEvent) {
+    if (props.drag) {
+      ev.preventDefault();
+    }
+  }
+  function dragOverFunc(ev: DragEvent) {
+    if (props.drag) {
+      ev.preventDefault();
+    }
   }
 </script>
 
@@ -224,15 +271,15 @@
 
     .virtual-table {
       .virtual-table-item {
-        :deep(.row) {
+        :deep(.virtual-table-row) {
           font-size: 14px;
           display: flex;
 
-          .col {
+          .vt-col {
             display: flex;
             flex-direction: column;
 
-            .cell {
+            .vt-cell {
               border-right: 1px solid #dddddd;
               border-bottom: 1px solid #dddddd;
               width: inherit;
@@ -257,18 +304,18 @@
             }
 
             &:first-of-type {
-              .cell {
+              .vt-cell {
                 border-left: 1px solid #dddddd;
               }
             }
 
             &.center {
-              .cell {
+              .vt-cell {
                 justify-content: center;
               }
             }
             &.right {
-              .cell {
+              .vt-cell {
                 justify-content: right;
               }
             }
@@ -282,8 +329,8 @@
             }
           }
           &:hover {
-            .col {
-              .cell {
+            .vt-col {
+              .vt-cell {
                 background-color: #f0f8ff;
               }
             }
@@ -294,9 +341,9 @@
           position: sticky;
           top: 0px;
           z-index: 1;
-          :deep(.row) {
-            .col {
-              .cell {
+          :deep(.virtual-table-row) {
+            .vt-col {
+              .vt-cell {
                 background-color: #188ac3;
                 color: #ffffff;
               }
@@ -308,9 +355,9 @@
           position: sticky;
           bottom: 0px;
           z-index: 1;
-          :deep(.row) {
-            .col {
-              .cell {
+          :deep(.virtual-table-row) {
+            .vt-col {
+              .vt-cell {
                 background-color: #f5f7fa;
                 color: #999999;
               }
@@ -319,9 +366,9 @@
         }
 
         &:first-of-type {
-          :deep(.row) {
-            .col {
-              .cell {
+          :deep(.virtual-table-row) {
+            .vt-col {
+              .vt-cell {
                 &:first-of-type {
                   border-top: 1px solid #dddddd;
                 }
@@ -331,9 +378,9 @@
         }
 
         &.highlight {
-          :deep(.row) {
-            .col {
-              .cell {
+          :deep(.virtual-table-row) {
+            .vt-col {
+              .vt-cell {
                 background-color: antiquewhite;
               }
             }
