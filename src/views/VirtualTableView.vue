@@ -80,7 +80,7 @@
       <div :class="vtColClass(vtConfig, 'operations')" :style="vtColStyle(vtConfig, 'operations')">
         <div class="vt-cell">
           <span title="详情" @click.stop="viewDetailFunc(index)" class="btn-text" :disabled="!(item.attr1.length >= 3)">详情</span>
-          <span title="编辑" @click.stop="editFunc(index)" class="btn-text" :disabled="!(item.attr1.length <= 4)">编辑</span>
+          <span title="编辑" @click.stop="editFunc(index)" class="btn-text" :disabled="!(item.attr2.length >= 3)">编辑</span>
         </div>
       </div>
     </template>
