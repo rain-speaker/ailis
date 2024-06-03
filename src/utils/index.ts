@@ -88,7 +88,7 @@ export function vtColClass(vtConfig: any[], prop: string) {
 
 export function vtColStyle(vtConfig: any[], prop: string) {
   const item = vtConfigItem(vtConfig, prop);
-  return { ...{ width: item.width, order: toNum(item.order) }, ...item.fixed };
+  return { ...{ width: item.width, order: item.order }, ...item.fixed };
 }
 
 export function vtFooterData(tableData: any[], vtConfig: any[]) {
