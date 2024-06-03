@@ -71,10 +71,6 @@
       type: Array as PropType<any[]>,
       required: true,
     },
-    vtConfig: {
-      type: Array as PropType<any[]>,
-      required: true,
-    },
     maxHeight: {
       type: Number,
       required: true,
@@ -108,7 +104,7 @@
     },
   });
 
-  const emit = defineEmits(["reorder"]);
+  const vtConfig: any = defineModel("vtConfig");
 
   onMounted(() => {
     watch(
@@ -153,7 +149,7 @@
     });
 
     if (props.footer) {
-      footerData.value = vtFooterData(props.tableData, props.vtConfig);
+      footerData.value = vtFooterData(props.tableData, vtConfig.value);
     }
 
     highlightedRows.value = [];
@@ -236,7 +232,42 @@
 
     targetProp.value = targetClass?.split("vt-col-")[1]?.split(" ")[0];
 
-    emit("reorder", sourceProp.value, targetProp.value);
+    reorder(sourceProp.value, targetProp.value);
+  }
+
+  function reorder(source: string, target: string) {
+    if (!source || !target) {
+      return;
+    }
+    if (source === target) {
+      return;
+    }
+
+    const list = JSON.parse(JSON.stringify(vtConfig.value));
+
+    const sourceItem = list.find((item: any) => item.prop === source);
+    const targetItem = list.find((item: any) => item.prop === target);
+
+    if (sourceItem?.fixed || targetItem?.fixed) {
+      return;
+    }
+
+    const sourceIndex1 = list.findIndex((item: any) => item.prop === source);
+    const targetIndex1 = list.findIndex((item: any) => item.prop === target);
+
+    const fix = sourceIndex1 < targetIndex1 ? 1 : 0;
+
+    const sourceIndex2 = list.findIndex((item: any) => item.prop === source);
+    const removed = list.splice(sourceIndex2, 1)[0];
+
+    const targetIndex2 = list.findIndex((item: any) => item.prop === target) + fix;
+    list.splice(targetIndex2, 0, removed);
+
+    list.forEach((item: any, index: number) => {
+      item.order = index + 1;
+    });
+
+    vtConfig.value = JSON.parse(JSON.stringify(list));
   }
 
   function dragEnterFunc(ev: DragEvent) {

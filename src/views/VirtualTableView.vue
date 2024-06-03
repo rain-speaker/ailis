@@ -1,7 +1,7 @@
 <template>
   <VirtualTable
     :table-data="tableData"
-    :vt-config="vtConfig"
+    v-model:vt-config="vtConfig"
     :max-height="560"
     :max-width="1024"
     :row-height="rowHeight"
@@ -9,7 +9,6 @@
     :detail-key="detailKey"
     footer
     drag
-    @reorder="reorder"
   >
     <template v-slot="{ item, index }">
       <div :class="vtColClass(vtConfig, 'index')" :style="vtColStyle(vtConfig, 'index')">
@@ -142,41 +141,6 @@
   }
   function editFunc(index: number) {
     console.log(`第${index}行编辑`);
-  }
-
-  function reorder(source: string, target: string) {
-    if (!source || !target) {
-      return;
-    }
-    if (source === target) {
-      return;
-    }
-
-    const list = JSON.parse(JSON.stringify(vtConfig.value));
-
-    const sourceItem = list.find((item: any) => item.prop === source);
-    const targetItem = list.find((item: any) => item.prop === target);
-
-    if (sourceItem?.fixed || targetItem?.fixed) {
-      return;
-    }
-
-    const sourceIndex1 = list.findIndex((item: any) => item.prop === source);
-    const targetIndex1 = list.findIndex((item: any) => item.prop === target);
-
-    const fix = sourceIndex1 < targetIndex1 ? 1 : 0;
-
-    const sourceIndex2 = list.findIndex((item: any) => item.prop === source);
-    const removed = list.splice(sourceIndex2, 1)[0];
-
-    const targetIndex2 = list.findIndex((item: any) => item.prop === target) + fix;
-    list.splice(targetIndex2, 0, removed);
-
-    list.forEach((item: any, index: number) => {
-      item.order = index + 1;
-    });
-
-    vtConfig.value = JSON.parse(JSON.stringify(list));
   }
 </script>
 
