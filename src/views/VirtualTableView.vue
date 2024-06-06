@@ -2,8 +2,8 @@
   <VirtualTable
     :table-data="tableData"
     :vt-config="vtConfig"
-    :max-height="560"
-    max-width="1024px"
+    :max-height="maxHeight"
+    :max-width="maxWidth"
     :row-height="rowHeight"
     :row-key="rowKey"
     :detail-key="detailKey"
@@ -102,11 +102,13 @@
     }
   }
   onMounted(() => {
-    initList(num.value);
+    // initList(num.value);
   });
 
   const detailKey = "detail";
-  const rowHeight = ref(28);
+  const rowHeight = 28;
+  const maxHeight = 28 * 20;
+  const maxWidth = "1024px";
   const rowKey = "id";
 
   const tableData: Ref<any[]> = ref([]);

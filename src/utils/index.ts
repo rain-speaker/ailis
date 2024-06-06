@@ -120,3 +120,26 @@ export function vtFooterData(tableData: any[], vtConfig: any[]) {
 
   return result;
 }
+
+export function clampingNum(value: number, min: number | null, max: number | null) {
+  if (min !== null && max !== null) {
+    if (min > max) {
+      throw new Error("min cannot be greater than max");
+    }
+    if (value < min) {
+      return min;
+    }
+    if (value > max) {
+      return max;
+    }
+  } else if (min === null && max !== null) {
+    if (value > max) {
+      return max;
+    }
+  } else if (min !== null && max === null) {
+    if (value < min) {
+      return min;
+    }
+  }
+  return value;
+}

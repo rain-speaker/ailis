@@ -36,7 +36,9 @@
         </div>
       </template>
 
-      <div class="virtual-table-item virtual-table-footer" v-if="footer">
+      <div class="virtual-table-empty" v-if="tableDataLength === 0"></div>
+
+      <div class="virtual-table-item virtual-table-footer" v-if="footer && tableDataLength > 0">
         <slot name="footer">
           <div class="virtual-table-row">
             <div
@@ -58,7 +60,7 @@
 
 <script setup lang="ts">
   import { ref, watch, onMounted } from "vue";
-  import { vtColClass, vtColStyle, vtFooterData } from "@/utils";
+  import { clampingNum, toNum, vtColClass, vtColStyle, vtFooterData } from "@/utils";
   import type { Ref, PropType } from "vue";
 
   const props = defineProps({
@@ -111,6 +113,9 @@
       () => props.tableData,
       () => {
         init();
+      },
+      {
+        immediate: true,
       },
     );
   });
@@ -174,9 +179,9 @@
         right = mid - 1;
       }
     }
-    startIndex.value = left;
+    startIndex.value = clampingNum(toNum(left), 0, clampingNum(tableDataLength.value - 1, 0, null));
 
-    paddingTop.value = AuxiliaryRowHeights.value[startIndex.value - 1] || 0;
+    paddingTop.value = clampingNum(toNum(AuxiliaryRowHeights.value[startIndex.value - 1] || 0), 0, null);
 
     let end = startIndex.value + 1;
     let height = props.maxHeight;
@@ -187,9 +192,16 @@
         break;
       }
     }
-    endIndex.value = end;
+    endIndex.value = clampingNum(toNum(end), 0, clampingNum(tableDataLength.value - 1, 0, null));
 
-    paddingBottom.value = AuxiliaryRowHeights.value[tableDataLength.value - 1] - AuxiliaryRowHeights.value[endIndex.value];
+    paddingBottom.value = clampingNum(
+      toNum(AuxiliaryRowHeights.value[tableDataLength.value - 1] - AuxiliaryRowHeights.value[endIndex.value]),
+      0,
+      null,
+    );
+    if (paddingBottom.value < 0) {
+      paddingBottom.value = 0;
+    }
   }
 
   function highlightFunc(index: number) {
@@ -431,6 +443,13 @@
             }
           }
         }
+      }
+      .virtual-table-empty {
+        height: 200px;
+        background-image: url(@/assets/images/table-empty.png);
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-position: center;
       }
     }
   }
