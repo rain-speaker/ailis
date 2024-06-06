@@ -1,10 +1,5 @@
 <template>
-  <div
-    ref="virtualTableContainer"
-    class="virtual-table-container"
-    :style="{ maxHeight: `${maxHeight}px`, maxWidth: `${maxWidth}px` }"
-    @scroll="main()"
-  >
+  <div ref="virtualTableContainer" class="virtual-table-container" :style="{ maxHeight: `${maxHeight}px`, maxWidth }" @scroll="main()">
     <div class="virtual-table" :style="{ paddingTop: `${paddingTop}px`, paddingBottom: `${paddingBottom}px` }">
       <div class="virtual-table-item virtual-table-header">
         <slot name="header">
@@ -80,8 +75,9 @@
       required: true,
     },
     maxWidth: {
-      type: Number,
-      required: true,
+      type: String,
+      required: false,
+      default: "100%",
     },
     rowHeight: {
       type: Number,

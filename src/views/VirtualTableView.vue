@@ -3,7 +3,7 @@
     :table-data="tableData"
     :vt-config="vtConfig"
     :max-height="560"
-    :max-width="1024"
+    max-width="1024px"
     :row-height="rowHeight"
     :row-key="rowKey"
     :detail-key="detailKey"
