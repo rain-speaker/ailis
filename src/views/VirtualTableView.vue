@@ -1,12 +1,13 @@
 <template>
   <VirtualTable
     :table-data="tableData"
-    v-model:vt-config="vtConfig"
+    :vt-config="vtConfig"
     :max-height="560"
     :max-width="1024"
     :row-height="rowHeight"
     :row-key="rowKey"
     :detail-key="detailKey"
+    @update-vt-config="updateVtConfig"
     footer
     drag
   >
@@ -110,7 +111,7 @@
 
   const tableData: Ref<any[]> = ref([]);
 
-  const vtConfig = ref([
+  const vtConfig: Ref<any[]> = ref([
     { label: "序号", prop: "index", width: "64px", align: "center", sum: "合计", fixed: { left: "0px" } },
     { label: "ID", prop: "id", width: "128px", fixed: { left: "64px" } },
     { label: "主单字段1", prop: "attr1", width: "128px", align: "right", sum: "quantity" },
@@ -135,9 +136,16 @@
     },
     { label: "操作", prop: "operations", width: "81px", fixed: { right: "0px" } },
   ]);
-  vtConfig.value.forEach((item: any, index) => {
-    item.order = index + 1;
-  });
+  updateVtConfig(null);
+
+  function updateVtConfig(newVtConfig: any[] | null) {
+    if (newVtConfig) {
+      vtConfig.value = newVtConfig;
+    }
+    vtConfig.value.forEach((item: any, index) => {
+      item.order = index + 1;
+    });
+  }
 
   function viewDetailFunc(index: number) {
     console.log(`第${index}行详情`);

@@ -71,6 +71,10 @@
       type: Array as PropType<any[]>,
       required: true,
     },
+    vtConfig: {
+      type: Array as PropType<any[]>,
+      required: true,
+    },
     maxHeight: {
       type: Number,
       required: true,
@@ -104,7 +108,7 @@
     },
   });
 
-  const vtConfig: any = defineModel("vtConfig");
+  const emit = defineEmits(["updateVtConfig"]);
 
   onMounted(() => {
     watch(
@@ -149,7 +153,7 @@
     });
 
     if (props.footer) {
-      footerData.value = vtFooterData(props.tableData, vtConfig.value);
+      footerData.value = vtFooterData(props.tableData, props.vtConfig);
     }
 
     highlightedRows.value = [];
@@ -243,7 +247,7 @@
       return;
     }
 
-    const list = JSON.parse(JSON.stringify(vtConfig.value));
+    const list = JSON.parse(JSON.stringify(props.vtConfig));
 
     const sourceItem = list.find((item: any) => item.prop === source);
     const targetItem = list.find((item: any) => item.prop === target);
@@ -267,7 +271,7 @@
       item.order = index + 1;
     });
 
-    vtConfig.value = JSON.parse(JSON.stringify(list));
+    emit("updateVtConfig", JSON.parse(JSON.stringify(list)));
   }
 
   function dragEnterFunc(ev: DragEvent) {
