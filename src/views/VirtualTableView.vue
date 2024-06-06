@@ -5,7 +5,7 @@
     :max-height="560"
     :max-width="1024"
     :row-height="rowHeight"
-    row-key="id"
+    :row-key="rowKey"
     :detail-key="detailKey"
     footer
     drag
@@ -106,22 +106,23 @@
 
   const detailKey = "detail";
   const rowHeight = ref(28);
+  const rowKey = "id";
 
   const tableData: Ref<any[]> = ref([]);
 
   const vtConfig = ref([
-    { label: "序号", prop: "index", width: "64px", align: "center", sum: "合计", fixed: { left: "0px" }, order: 1 },
-    { label: "ID", prop: "id", width: "128px", fixed: { left: "64px" }, order: 2 },
-    { label: "主单字段1", prop: "attr1", width: "128px", align: "right", sum: "quantity", order: 3 },
-    { label: "主单字段2", prop: "attr2", width: "128px", order: 4 },
-    { label: "主单字段3", prop: "attr3", width: "128px", order: 5 },
-    { label: "主单字段4", prop: "attr4", width: "128px", order: 6 },
-    { label: "主单字段5", prop: "attr5", width: "128px", align: "right", sum: "weight", order: 7 },
-    { label: "主单字段6", prop: "attr6", width: "128px", order: 8 },
-    { label: "主单字段7", prop: "attr7", width: "128px", order: 9 },
-    { label: "主单字段8", prop: "attr8", width: "128px", order: 10 },
-    { label: "主单字段9", prop: "attr9", width: "128px", order: 11 },
-    { label: "详单字段1", prop: "detail1", width: "128px", detail: detailKey, order: 12 },
+    { label: "序号", prop: "index", width: "64px", align: "center", sum: "合计", fixed: { left: "0px" } },
+    { label: "ID", prop: "id", width: "128px", fixed: { left: "64px" } },
+    { label: "主单字段1", prop: "attr1", width: "128px", align: "right", sum: "quantity" },
+    { label: "主单字段2", prop: "attr2", width: "128px" },
+    { label: "主单字段3", prop: "attr3", width: "128px" },
+    { label: "主单字段4", prop: "attr4", width: "128px" },
+    { label: "主单字段5", prop: "attr5", width: "128px", align: "right", sum: "weight" },
+    { label: "主单字段6", prop: "attr6", width: "128px" },
+    { label: "主单字段7", prop: "attr7", width: "128px" },
+    { label: "主单字段8", prop: "attr8", width: "128px" },
+    { label: "主单字段9", prop: "attr9", width: "128px" },
+    { label: "详单字段1", prop: "detail1", width: "128px", detail: detailKey },
     {
       label: "详单字段2",
       prop: "detail2",
@@ -131,10 +132,12 @@
       detail: detailKey,
       fixed: { right: "81px" },
       outline: "outline",
-      order: 13,
     },
-    { label: "操作", prop: "operations", width: "81px", fixed: { right: "0px" }, order: 14 },
+    { label: "操作", prop: "operations", width: "81px", fixed: { right: "0px" } },
   ]);
+  vtConfig.value.forEach((item: any, index) => {
+    item.order = index + 1;
+  });
 
   function viewDetailFunc(index: number) {
     console.log(`第${index}行详情`);
