@@ -328,8 +328,22 @@
                 text-overflow: ellipsis;
 
                 &.btn-text {
+                  color: #188ac3;
+                  cursor: pointer;
                   margin: 0px;
                   margin-left: 8px;
+
+                  &:hover {
+                    color: lighten(#188ac3, 10%);
+                  }
+                  &:active {
+                    color: lighten(#188ac3, 20%);
+                  }
+
+                  &[disabled="true"] {
+                    color: #bbbbbb;
+                    pointer-events: none;
+                  }
                 }
               }
             }
@@ -418,23 +432,6 @@
           }
         }
       }
-    }
-  }
-
-  :deep(.btn-text) {
-    color: #188ac3;
-    cursor: pointer;
-
-    &:hover {
-      color: lighten(#188ac3, 10%);
-    }
-    &:active {
-      color: lighten(#188ac3, 20%);
-    }
-
-    &[disabled="true"] {
-      color: #bbbbbb;
-      pointer-events: none;
     }
   }
 </style>
